@@ -14,7 +14,7 @@ class PokemonDialog(tk.Toplevel):
     def __init__(self, parent, title, initial=None):
         super().__init__(parent)
         self.title(title)
-        self.geometry("400x460")
+        self.geometry("800x1280")
         self.result = None
         initial = initial or {}
 
@@ -90,7 +90,7 @@ class ItemDialog(tk.Toplevel):
     def __init__(self, parent, title, initial=None):
         super().__init__(parent)
         self.title(title)
-        self.geometry("400x400")
+        self.geometry("800x900")
         self.result = None
         initial = initial or {}
 
@@ -102,7 +102,7 @@ class ItemDialog(tk.Toplevel):
         frame.pack(fill=tk.BOTH, expand=True)
 
         tk.Label(frame, text="Item Name:").grid(row=0, column=0, sticky="e", pady=3, padx=(0, 5))
-        cb = ttk.Combobox(frame, textvariable=self.name, values=ITEMS, width=22, state="readonly")
+        cb = ttk.Combobox(frame, textvariable=self.name, values=ITEMS, width=16, state="write")
         cb.grid(row=0, column=1, sticky="w", pady=3)
 
         tk.Label(frame, text="Rarity Weight:").grid(row=1, column=0, sticky="e", pady=3, padx=(0, 5))
@@ -143,7 +143,7 @@ class CourseEditor:
     def __init__(self, root):
         self.root = root
         self.root.title("Pokéwalker Course Editor (Cheat Generator)")
-        self.root.geometry("800x850") # Give the window plenty of room
+        self.root.geometry("1400x1200") # Give the window plenty of room
         self.current_file = None
 
         # Initialize Strict State
@@ -439,11 +439,11 @@ class CourseEditor:
 
         except Exception as e:
             messagebox.showerror("Export Error", f"Failed to generate cheat data:\n{e}")
-
+#THE HELP IS SO HIGH QUALITY AHAHAHHAHA
     def show_help(self):
         help_win = tk.Toplevel(self.root)
         help_win.title("Help Documentation")
-        help_win.geometry("550x450")
+        help_win.geometry("720x1080")
         text_area = scrolledtext.ScrolledText(help_win, wrap=tk.WORD, width=60, height=20)
         text_area.pack(padx=10, pady=10, fill=tk.BOTH, expand=True)
         help_text = """Pokéwalker Course Editor - Cheat Generator
