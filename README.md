@@ -16,3 +16,4 @@ Process (I will forget otherwise)
 7. Send mon to whatever new realm you put together.
 
    I HAVE NO IDEA HOW IT FUNCTIONS ON RETURNS. Do this with an EMPTY PkWalker. 
+[b]WARNING: YOU HAVE TO PUSH L+R EACH TIME YOU SEND A MON OUT THIS METHOD. I SUGGEST SENDING ONE FOREVER AND HAVING THEM SEND GIFTS BACK, IF YOU JUST WANT ITEMS LIKE ME. [/b]
