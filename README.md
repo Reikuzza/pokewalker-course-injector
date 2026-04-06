@@ -22,7 +22,7 @@ Process (I will forget otherwise)
 
     -.
 
-<Todo List>
+Todo List
 1. Make the item list writable, suggested and autocorrecting to enum files
 2. Devise some kind of code to swap all the copyrighted names out for PINGUS with a number. So PINGUS1 is the grass poison starter. PINGUS493 is ArkayYUS. 
 3. What would be divine is a recommended moveset for each mon accurate to their level but that ahaahhhahahahhah is LEAGUES away. 
