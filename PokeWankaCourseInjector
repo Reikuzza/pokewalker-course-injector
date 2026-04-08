@@ -10,11 +10,48 @@ from enum import Enum
 # CUSTOM DIALOGS
 # ==========================================
 
+def setup_autocomplete(widget, full_list, min_chars=4):
+    """Adds a dynamic pop-up autofill to a Combobox."""
+    def on_keyrelease(event):
+        # Ignore navigation keys so the user can use arrow keys to select items
+        if event.keysym in ('Up', 'Down', 'Left', 'Right', 'Return', 'Tab', 'Escape', 'Shift_L', 'Shift_R', 'Caps_Lock'):
+            return
+            
+        typed = widget.get()
+        
+        if len(typed) >= min_chars:
+            hits = [x for x in full_list if typed.lower() in x.lower()]
+            widget['values'] = hits
+            if hits:
+                # Force the dropdown list to pop open
+                try:
+                    widget.tk.eval(f'ttk::combobox::Post {widget._w}')
+                except Exception:
+                    pass
+            else:
+                # Force the dropdown to close if no matches exist
+                try:
+                    widget.tk.eval(f'ttk::combobox::Unpost {widget._w}')
+                except Exception:
+                    pass
+        else:
+            # If less than required chars, reset list and close the dropdown
+            widget['values'] = full_list
+            try:
+                widget.tk.eval(f'ttk::combobox::Unpost {widget._w}')
+            except Exception:
+                pass
+
+    widget.bind('<KeyRelease>', on_keyrelease)
+    # Ensure manual clicks still show the full list
+    widget.bind('<Button-1>', lambda e: widget.config(values=full_list))
+
+
 class PokemonDialog(tk.Toplevel):
     def __init__(self, parent, title, initial=None):
         super().__init__(parent)
         self.title(title)
-        self.geometry("800x880")
+        self.geometry("800x1280")
         self.result = None
         initial = initial or {}
 
@@ -51,26 +88,12 @@ class PokemonDialog(tk.Toplevel):
         for i, (label_text, var, options) in enumerate(fields):
             tk.Label(frame, text=label_text).grid(row=i, column=0, sticky="e", pady=3, padx=(0, 5))
             if options is not None:
-                # Removed 'state="readonly"' to allow free typing
+                # Removed 'state' lock to allow typing
                 cb = ttk.Combobox(frame, textvariable=var, values=options, width=22)
                 cb.grid(row=i, column=1, sticky="w", pady=3)
-
-                # --- Autocomplete Logic ---
-                def setup_autocomplete(widget, full_list):
-                    def on_keyrelease(event):
-                        # Ignore standard navigation keys
-                        if event.keysym in ('Up', 'Down', 'Left', 'Right', 'Return', 'Tab'):
-                            return
-                        typed = widget.get()
-                        if typed == '':
-                            widget['values'] = full_list
-                        else:
-                            widget['values'] = [x for x in full_list if typed.lower() in x.lower()]
-                    
-                    widget.bind('<KeyRelease>', on_keyrelease)
-                    widget.bind('<FocusIn>', lambda e: widget.config(values=full_list))
                 
-                setup_autocomplete(cb, options)
+                # Apply the 4-character autofill rule
+                setup_autocomplete(cb, options, min_chars=4)
             else:
                 tk.Entry(frame, textvariable=var, width=25).grid(row=i, column=1, sticky="w", pady=3)
 
@@ -124,7 +147,7 @@ class ItemDialog(tk.Toplevel):
     def __init__(self, parent, title, initial=None):
         super().__init__(parent)
         self.title(title)
-        self.geometry("800x500")
+        self.geometry("800x900")
         self.result = None
         initial = initial or {}
 
@@ -138,21 +161,11 @@ class ItemDialog(tk.Toplevel):
         tk.Label(frame, text="Item Name:").grid(row=0, column=0, sticky="e", pady=3, padx=(0, 5))
         
         # Allowed typing for autocomplete
-        cb = ttk.Combobox(frame, textvariable=self.name, values=ITEMS, width=22)
+        cb = ttk.Combobox(frame, textvariable=self.name, values=ITEMS, width=16)
         cb.grid(row=0, column=1, sticky="w", pady=3)
-
-        # --- Autocomplete Logic ---
-        def filter_items(event):
-            if event.keysym in ('Up', 'Down', 'Left', 'Right', 'Return', 'Tab'):
-                return
-            typed = cb.get()
-            if typed == '':
-                cb['values'] = ITEMS
-            else:
-                cb['values'] = [x for x in ITEMS if typed.lower() in x.lower()]
-
-        cb.bind('<KeyRelease>', filter_items)
-        cb.bind('<FocusIn>', lambda e: cb.config(values=ITEMS))
+        
+        # Apply the 4-character autofill rule
+        setup_autocomplete(cb, ITEMS, min_chars=4)
 
         tk.Label(frame, text="Rarity Weight:").grid(row=1, column=0, sticky="e", pady=3, padx=(0, 5))
         tk.Entry(frame, textvariable=self.rarity, width=25).grid(row=1, column=1, sticky="w", pady=3)
@@ -194,7 +207,7 @@ class CourseEditor:
     def __init__(self, root):
         self.root = root
         self.root.title("Pokéwalker Course Editor (Cheat Generator)")
-        self.root.geometry("1200x1850") 
+        self.root.geometry("1400x1200")
         self.current_file = None
 
         # Initialize Strict State
