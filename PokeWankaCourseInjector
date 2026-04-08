@@ -14,7 +14,7 @@ class PokemonDialog(tk.Toplevel):
     def __init__(self, parent, title, initial=None):
         super().__init__(parent)
         self.title(title)
-        self.geometry("800x1280")
+        self.geometry("800x880")
         self.result = None
         initial = initial or {}
 
@@ -51,8 +51,26 @@ class PokemonDialog(tk.Toplevel):
         for i, (label_text, var, options) in enumerate(fields):
             tk.Label(frame, text=label_text).grid(row=i, column=0, sticky="e", pady=3, padx=(0, 5))
             if options is not None:
-                cb = ttk.Combobox(frame, textvariable=var, values=options, width=22, state="readonly")
+                # Removed 'state="readonly"' to allow free typing
+                cb = ttk.Combobox(frame, textvariable=var, values=options, width=22)
                 cb.grid(row=i, column=1, sticky="w", pady=3)
+
+                # --- Autocomplete Logic ---
+                def setup_autocomplete(widget, full_list):
+                    def on_keyrelease(event):
+                        # Ignore standard navigation keys
+                        if event.keysym in ('Up', 'Down', 'Left', 'Right', 'Return', 'Tab'):
+                            return
+                        typed = widget.get()
+                        if typed == '':
+                            widget['values'] = full_list
+                        else:
+                            widget['values'] = [x for x in full_list if typed.lower() in x.lower()]
+                    
+                    widget.bind('<KeyRelease>', on_keyrelease)
+                    widget.bind('<FocusIn>', lambda e: widget.config(values=full_list))
+                
+                setup_autocomplete(cb, options)
             else:
                 tk.Entry(frame, textvariable=var, width=25).grid(row=i, column=1, sticky="w", pady=3)
 
@@ -68,18 +86,34 @@ class PokemonDialog(tk.Toplevel):
 
     def on_ok(self):
         try:
+            # Validations to prevent typos from crashing the exporter later
+            species = self.species.get().strip()
+            item = self.held_item.get().strip()
+            moves = [self.move1.get().strip(), self.move2.get().strip(), self.move3.get().strip(), self.move4.get().strip()]
+
+            if species not in POKEMON_SPECIES_LIST:
+                messagebox.showerror("Invalid Input", f"'{species}' is not a valid Species.", parent=self)
+                return
+            if item not in ITEMS:
+                messagebox.showerror("Invalid Input", f"'{item}' is not a valid Item.", parent=self)
+                return
+            for m in moves:
+                if m not in MOVE_LIST:
+                    messagebox.showerror("Invalid Input", f"'{m}' is not a valid Move.", parent=self)
+                    return
+
             self.result = {
-                "species": self.species.get().strip(),
+                "species": species,
                 "level": int(self.level.get()),
                 "form": int(self.form.get()),
                 "gender": self.gender.get().strip(),
                 "rarity": int(self.rarity.get()),
                 "steps": int(self.steps.get()),
-                "held_item": self.held_item.get().strip(),
-                "move1": self.move1.get().strip(),
-                "move2": self.move2.get().strip(),
-                "move3": self.move3.get().strip(),
-                "move4": self.move4.get().strip()
+                "held_item": item,
+                "move1": moves[0],
+                "move2": moves[1],
+                "move3": moves[2],
+                "move4": moves[3]
             }
             self.destroy()
         except ValueError:
@@ -90,7 +124,7 @@ class ItemDialog(tk.Toplevel):
     def __init__(self, parent, title, initial=None):
         super().__init__(parent)
         self.title(title)
-        self.geometry("800x900")
+        self.geometry("800x500")
         self.result = None
         initial = initial or {}
 
@@ -102,8 +136,23 @@ class ItemDialog(tk.Toplevel):
         frame.pack(fill=tk.BOTH, expand=True)
 
         tk.Label(frame, text="Item Name:").grid(row=0, column=0, sticky="e", pady=3, padx=(0, 5))
-        cb = ttk.Combobox(frame, textvariable=self.name, values=ITEMS, width=16, state="write")
+        
+        # Allowed typing for autocomplete
+        cb = ttk.Combobox(frame, textvariable=self.name, values=ITEMS, width=22)
         cb.grid(row=0, column=1, sticky="w", pady=3)
+
+        # --- Autocomplete Logic ---
+        def filter_items(event):
+            if event.keysym in ('Up', 'Down', 'Left', 'Right', 'Return', 'Tab'):
+                return
+            typed = cb.get()
+            if typed == '':
+                cb['values'] = ITEMS
+            else:
+                cb['values'] = [x for x in ITEMS if typed.lower() in x.lower()]
+
+        cb.bind('<KeyRelease>', filter_items)
+        cb.bind('<FocusIn>', lambda e: cb.config(values=ITEMS))
 
         tk.Label(frame, text="Rarity Weight:").grid(row=1, column=0, sticky="e", pady=3, padx=(0, 5))
         tk.Entry(frame, textvariable=self.rarity, width=25).grid(row=1, column=1, sticky="w", pady=3)
@@ -123,14 +172,16 @@ class ItemDialog(tk.Toplevel):
 
     def on_ok(self):
         try:
+            item_name = self.name.get().strip()
+            if not item_name or item_name not in ITEMS:
+                messagebox.showerror("Invalid Input", "Please select a valid item from the list.", parent=self)
+                return
+
             self.result = {
-                "name": self.name.get().strip(),
+                "name": item_name,
                 "rarity": int(self.rarity.get()),
                 "steps": int(self.steps.get())
             }
-            if not self.result["name"]:
-                messagebox.showerror("Invalid Input", "Please select an item.", parent=self)
-                return
             self.destroy()
         except ValueError:
             messagebox.showerror("Invalid Input", "Rarity and Steps must be whole numbers.", parent=self)
@@ -143,7 +194,7 @@ class CourseEditor:
     def __init__(self, root):
         self.root = root
         self.root.title("Pokéwalker Course Editor (Cheat Generator)")
-        self.root.geometry("1400x1200") # Give the window plenty of room
+        self.root.geometry("1200x1850") 
         self.current_file = None
 
         # Initialize Strict State
@@ -439,7 +490,7 @@ class CourseEditor:
 
         except Exception as e:
             messagebox.showerror("Export Error", f"Failed to generate cheat data:\n{e}")
-#THE HELP IS SO HIGH QUALITY AHAHAHHAHA
+
     def show_help(self):
         help_win = tk.Toplevel(self.root)
         help_win.title("Help Documentation")
@@ -607,8 +658,6 @@ class PokeWalkerCourse:
 
         return header + name + filler + game_id + game_title + code
 
-
-
 # ==========================================
 # DATA & ENUMS
 # ==========================================
@@ -633,7 +682,7 @@ class Type(Enum):
     BUG = 6
     GHOST = 7
     STEEL = 8
-    UNK = 9
+    NA = 9
     FIRE = 10
     WATER = 11
     GRASS = 12
