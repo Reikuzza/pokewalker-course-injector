@@ -37,4 +37,5 @@ Todo List
 12. A way to edit the AR code into an ursdatcheat file without 4CCE would be gnarly cool
 13. A portable exe or something cause when I was a kid I couldn't run no script. My PC was a pile of steaming bidoof crap. DoofXP. 
 14. A warning before it opens that if someone paid for this they got ripped off cause this should be free to everyone trying to enjoy walking. 
-15. Ar code decoder button. if bokewalk related it should show what data is modified. Useful for paranoid people? 
+15. Ar code decoder button. if bokewalk related it should show what data is modified. Useful for paranoid people?
+16. A VERSION SELECTOR. ie: european, americant, Japain etc regions and which version of hart guld sul silva gunna you running. Not covering rom hacks. im not that cfaxzy  cray crazy . the thinkpad keyboards were better on the t480 
