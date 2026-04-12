@@ -7,13 +7,33 @@ from typing import List
 from enum import Enum
 
 # ==========================================
+# GAME & REGION DATABASE
+# Add your custom game IDs and Regions here!
+# ==========================================
+
+GAME_LIST = ["SoulSilver", "HeartGold"]
+REGION_LIST = ["USA", "EUR", "JPN"]
+
+# The exporter will combine the Dropdown choices (e.g. "SoulSilver" + " " + "USA") 
+# and look it up in this dictionary to get the correct AR formatting data.
+GAME_DB = {
+    "SoulSilver USA": {"text": "IPGE", "value": 0x00000000, "title": "Pokemon SoulSilver"},
+    "HeartGold USA": {"text": "IPKE", "value": 0x00000000, "title": "Pokemon HeartGold"},
+    
+    "SoulSilver EUR": {"text": "IPGP", "value": 0x00000000, "title": "Pokemon SoulSilver"},
+    "HeartGold EUR": {"text": "IPKP", "value": 0x00000000, "title": "Pokemon HeartGold"},
+    
+    "SoulSilver JPN": {"text": "IPGJ", "value": 0x00000000, "title": "Pokemon SoulSilver"},
+    "HeartGold JPN": {"text": "IPKJ", "value": 0x00000000, "title": "Pokemon HeartGold"},
+}
+
+# ==========================================
 # CUSTOM DIALOGS
 # ==========================================
 
 def setup_autocomplete(widget, full_list, min_chars=4):
     """Adds a dynamic pop-up autofill to a Combobox."""
     def on_keyrelease(event):
-        # Ignore navigation keys so the user can use arrow keys to select items
         if event.keysym in ('Up', 'Down', 'Left', 'Right', 'Return', 'Tab', 'Escape', 'Shift_L', 'Shift_R', 'Caps_Lock'):
             return
             
@@ -23,19 +43,16 @@ def setup_autocomplete(widget, full_list, min_chars=4):
             hits = [x for x in full_list if typed.lower() in x.lower()]
             widget['values'] = hits
             if hits:
-                # Force the dropdown list to pop open
                 try:
                     widget.tk.eval(f'ttk::combobox::Post {widget._w}')
                 except Exception:
                     pass
             else:
-                # Force the dropdown to close if no matches exist
                 try:
                     widget.tk.eval(f'ttk::combobox::Unpost {widget._w}')
                 except Exception:
                     pass
         else:
-            # If less than required chars, reset list and close the dropdown
             widget['values'] = full_list
             try:
                 widget.tk.eval(f'ttk::combobox::Unpost {widget._w}')
@@ -43,7 +60,6 @@ def setup_autocomplete(widget, full_list, min_chars=4):
                 pass
 
     widget.bind('<KeyRelease>', on_keyrelease)
-    # Ensure manual clicks still show the full list
     widget.bind('<Button-1>', lambda e: widget.config(values=full_list))
 
 
@@ -55,11 +71,9 @@ class PokemonDialog(tk.Toplevel):
         self.result = None
         initial = initial or {}
 
-        # Set up Variables
         self.species = tk.StringVar(value=initial.get("species", "BULBASAUR"))
         self.level = tk.StringVar(value=str(initial.get("level", 1)))
         self.form = tk.StringVar(value=str(initial.get("form", 0)))
-        self.gender = tk.StringVar(value=initial.get("gender", "MALE"))
         self.rarity = tk.StringVar(value=str(initial.get("rarity", 10)))
         self.steps = tk.StringVar(value=str(initial.get("steps", 0)))
         self.held_item = tk.StringVar(value=initial.get("held_item", "None"))
@@ -75,7 +89,6 @@ class PokemonDialog(tk.Toplevel):
             ("Species:", self.species, POKEMON_SPECIES_LIST),
             ("Level:", self.level, None),
             ("Form ID:", self.form, None),
-            ("Gender:", self.gender, GENDER_LIST),
             ("Rarity Weight:", self.rarity, None),
             ("Required Steps:", self.steps, None),
             ("Held Item:", self.held_item, ITEMS),
@@ -88,11 +101,8 @@ class PokemonDialog(tk.Toplevel):
         for i, (label_text, var, options) in enumerate(fields):
             tk.Label(frame, text=label_text).grid(row=i, column=0, sticky="e", pady=3, padx=(0, 5))
             if options is not None:
-                # Removed 'state' lock to allow typing
                 cb = ttk.Combobox(frame, textvariable=var, values=options, width=22)
                 cb.grid(row=i, column=1, sticky="w", pady=3)
-                
-                # Apply the 4-character autofill rule
                 setup_autocomplete(cb, options, min_chars=4)
             else:
                 tk.Entry(frame, textvariable=var, width=25).grid(row=i, column=1, sticky="w", pady=3)
@@ -109,7 +119,6 @@ class PokemonDialog(tk.Toplevel):
 
     def on_ok(self):
         try:
-            # Validations to prevent typos from crashing the exporter later
             species = self.species.get().strip()
             item = self.held_item.get().strip()
             moves = [self.move1.get().strip(), self.move2.get().strip(), self.move3.get().strip(), self.move4.get().strip()]
@@ -129,7 +138,7 @@ class PokemonDialog(tk.Toplevel):
                 "species": species,
                 "level": int(self.level.get()),
                 "form": int(self.form.get()),
-                "gender": self.gender.get().strip(),
+                "gender": "MALE",
                 "rarity": int(self.rarity.get()),
                 "steps": int(self.steps.get()),
                 "held_item": item,
@@ -160,11 +169,8 @@ class ItemDialog(tk.Toplevel):
 
         tk.Label(frame, text="Item Name:").grid(row=0, column=0, sticky="e", pady=3, padx=(0, 5))
         
-        # Allowed typing for autocomplete
         cb = ttk.Combobox(frame, textvariable=self.name, values=ITEMS, width=16)
         cb.grid(row=0, column=1, sticky="w", pady=3)
-        
-        # Apply the 4-character autofill rule
         setup_autocomplete(cb, ITEMS, min_chars=4)
 
         tk.Label(frame, text="Rarity Weight:").grid(row=1, column=0, sticky="e", pady=3, padx=(0, 5))
@@ -207,13 +213,15 @@ class CourseEditor:
     def __init__(self, root):
         self.root = root
         self.root.title("Pokéwalker Course Editor (Cheat Generator)")
-        self.root.geometry("1400x1200")
+        self.root.geometry("1400x1400") 
         self.current_file = None
 
         # Initialize Strict State
         self.course_data = {
             "name": "Custom Course",
             "target_slot": COURSE_SLOTS[0],
+            "target_game": GAME_LIST[0],
+            "target_region": REGION_LIST[0],
             "watts": 0,
             "route_image": ROUTE_IMAGE_LIST[0],
             "type1": TYPE_LIST[0],
@@ -257,9 +265,18 @@ class CourseEditor:
         self.watts_var = tk.StringVar()
         tk.Entry(top, textvariable=self.watts_var, width=25).grid(row=3, column=1, sticky="w", pady=2)
 
+        # NEW: Target Game & Region Dropdowns
+        tk.Label(top, text="Target Game:").grid(row=4, column=0, sticky="e", pady=2)
+        self.game_var = tk.StringVar()
+        ttk.Combobox(top, textvariable=self.game_var, values=GAME_LIST, state="readonly", width=22).grid(row=4, column=1, sticky="w", pady=2)
+
+        tk.Label(top, text="Target Region:").grid(row=5, column=0, sticky="e", pady=2)
+        self.region_var = tk.StringVar()
+        ttk.Combobox(top, textvariable=self.region_var, values=REGION_LIST, state="readonly", width=22).grid(row=5, column=1, sticky="w", pady=2)
+
         # Type Selection Row
         type_frame = tk.Frame(top)
-        type_frame.grid(row=4, column=0, columnspan=2, pady=10, sticky="w")
+        type_frame.grid(row=6, column=0, columnspan=2, pady=10, sticky="w")
         tk.Label(type_frame, text="Special Types:").pack(side=tk.LEFT)
         self.type1_var = tk.StringVar()
         self.type2_var = tk.StringVar()
@@ -311,6 +328,8 @@ class CourseEditor:
     def refresh_ui(self):
         self.name_var.set(self.course_data["name"])
         self.slot_var.set(self.course_data.get("target_slot", COURSE_SLOTS[0]))
+        self.game_var.set(self.course_data.get("target_game", GAME_LIST[0]))
+        self.region_var.set(self.course_data.get("target_region", REGION_LIST[0]))
         self.watts_var.set(str(self.course_data["watts"]))
         self.route_var.set(self.course_data["route_image"])
         self.type1_var.set(self.course_data["type1"])
@@ -331,6 +350,8 @@ class CourseEditor:
     def update_data_from_ui(self):
         self.course_data["name"] = self.name_var.get()
         self.course_data["target_slot"] = self.slot_var.get()
+        self.course_data["target_game"] = self.game_var.get()
+        self.course_data["target_region"] = self.region_var.get()
         try:
             self.course_data["watts"] = int(self.watts_var.get())
         except ValueError:
@@ -373,7 +394,6 @@ class CourseEditor:
             with open(path, "r", encoding="utf-8") as f:
                 loaded = json.load(f)
             
-            # Validate strict length
             if len(loaded.get("pokemon", [])) != 6 or len(loaded.get("items", [])) != 10:
                 messagebox.showerror("Error", "Invalid JSON. Must contain exactly 6 Pokemon and 10 Items.")
                 return
@@ -413,7 +433,7 @@ class CourseEditor:
             for p in self.course_data["pokemon"]:
                 p_slots.append(PokeWalkerSlot(
                     species=Species[p["species"]], level=p["level"], item=p["held_item"],
-                    form=p["form"], gender=Gender[p["gender"]],
+                    form=p["form"], gender=Gender["MALE"],
                     moves=[Move[p["move1"]], Move[p["move2"]], Move[p["move3"]], Move[p["move4"]]],
                     step_requirement=p["steps"], rarity_weight=p["rarity"]
                 ))
@@ -460,7 +480,7 @@ class CourseEditor:
                     level=p["level"],
                     item=p["held_item"],
                     form=p["form"],
-                    gender=Gender[p["gender"]],
+                    gender=Gender["MALE"],
                     moves=[Move[p["move1"]], Move[p["move2"]], Move[p["move3"]], Move[p["move4"]]],
                     step_requirement=p["steps"],
                     rarity_weight=p["rarity"]
@@ -487,7 +507,19 @@ class CourseEditor:
                 special_types=types
             )
 
-            cheat_binary = course.to_usr_cheat_dat()
+            # Fetch Target Game/Region details dynamically
+            game = self.course_data["target_game"]
+            region = self.course_data["target_region"]
+            lookup_key = f"{game} {region}"
+            
+            # Fallback to standard SoulSilver USA if combination doesn't exist
+            db_info = GAME_DB.get(lookup_key, {"text": "IPGE", "value": 0x00000000, "title": "Pokemon SoulSilver"})
+
+            cheat_binary = course.to_usr_cheat_dat(
+                game_id_text=db_info["text"],
+                game_id_value=db_info["value"],
+                game_title_text=db_info["title"]
+            )
 
             filepath = filedialog.asksaveasfilename(
                 title="Save usrcheat.dat",
@@ -629,11 +661,8 @@ class PokeWalkerCourse:
                     f"{int.from_bytes(data[offset:offset + 4], 'little'):08X}\n"
         return code
 
-    def to_usr_cheat_dat(self) -> bytearray:
+    def to_usr_cheat_dat(self, game_id_text="IPGE", game_id_value=0x00000000, game_title_text="Pokemon SoulSilver") -> bytearray:
         database_title_text = "PokeWalker"
-        game_id_text = "IPGE"
-        game_id_value = 0x00000000
-        game_title_text = "Pokemon SoulSilver"
         code_title_text = "Custom PokeWalker Course"
         code_text = self.to_ar_code()
 
